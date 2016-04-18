@@ -29,7 +29,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -76,7 +75,7 @@ public class FanoutLambdaIntegrationTest {
   }
 
   @AfterClass
-  public static void stopKafkaCluster() throws IOException {
+  public static void stopKafkaCluster() throws Exception {
     if (cluster != null) {
       cluster.stop();
     }

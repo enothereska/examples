@@ -7,7 +7,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Properties;
 
+import io.confluent.examples.streams.RestApp;
 import io.confluent.examples.streams.zookeeper.ZooKeeperEmbedded;
+import io.confluent.kafka.schemaregistry.avro.AvroCompatibilityLevel;
 
 /**
  * Runs an in-memory, "embedded" Kafka cluster with 1 ZooKeeper instance and 1 Kafka broker.
@@ -15,14 +17,15 @@ import io.confluent.examples.streams.zookeeper.ZooKeeperEmbedded;
 public class EmbeddedSingleNodeKafkaCluster {
 
   private static final Logger log = LoggerFactory.getLogger(EmbeddedSingleNodeKafkaCluster.class);
+  private static final String KAFKASTORE_TOPIC = "_schemas";
+  private static final String AVRO_COMPATIBILITY_TYPE = AvroCompatibilityLevel.NONE.name;
 
   private final ZooKeeperEmbedded zookeeper;
   private final KafkaEmbedded broker;
+  private final RestApp schemaRegistry;
 
   /**
    * Creates and starts a Kafka cluster.
-   *
-   * @throws Exception
    */
   public EmbeddedSingleNodeKafkaCluster() throws Exception {
     this(new Properties());
@@ -32,7 +35,6 @@ public class EmbeddedSingleNodeKafkaCluster {
    * Creates and starts a Kafka cluster.
    *
    * @param brokerConfig Additional broker configuration settings.
-   * @throws Exception
    */
   public EmbeddedSingleNodeKafkaCluster(Properties brokerConfig) throws Exception {
     log.debug("Initiating embedded Kafka cluster startup");
@@ -47,6 +49,9 @@ public class EmbeddedSingleNodeKafkaCluster {
     broker.start();
     log.debug("Kafka instance is running at {}, connected to ZooKeeper at {}",
         broker.brokerList(), broker.zookeeperConnect());
+
+    schemaRegistry = new RestApp(InstanceSpec.getRandomPort(), zookeeperConnect(), KAFKASTORE_TOPIC, AVRO_COMPATIBILITY_TYPE);
+    schemaRegistry.start();
   }
 
   private Properties effectiveBrokerConfigFrom(Properties brokerConfig, ZooKeeperEmbedded zookeeper) {
@@ -61,7 +66,8 @@ public class EmbeddedSingleNodeKafkaCluster {
   /**
    * Stop the Kafka cluster.
    */
-  public void stop() throws IOException {
+  public void stop() throws Exception {
+    schemaRegistry.stop();
     broker.stop();
     zookeeper.stop();
   }
@@ -83,6 +89,13 @@ public class EmbeddedSingleNodeKafkaCluster {
    */
   public String zookeeperConnect() {
     return zookeeper.connectString();
+  }
+
+  /**
+   * The "schema.registry.url" setting of this schema registry instance.
+   */
+  public String schemaRegistryUrl() {
+    return schemaRegistry.restConnect;
   }
 
   /**

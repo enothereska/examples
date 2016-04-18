@@ -17,7 +17,6 @@ package io.confluent.examples.streams.utils;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.kafka.common.serialization.Serializer;
 
 import java.util.Map;
@@ -35,6 +34,10 @@ public class SpecificAvroSerializer<T extends  org.apache.avro.specific.Specific
 
     public SpecificAvroSerializer(SchemaRegistryClient client) {
         inner = new KafkaAvroSerializer(client);
+    }
+
+    public SpecificAvroSerializer(SchemaRegistryClient client, Map<String, ?> props) {
+        inner = new KafkaAvroSerializer(client, props);
     }
 
     @Override
