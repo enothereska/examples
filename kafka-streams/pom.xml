@@ -44,7 +44,7 @@
         <kafka.version>0.10.0.0-SNAPSHOT</kafka.version>
         <kafka.scala.version>2.11</kafka.scala.version>
         <scala.version>${kafka.scala.version}.8</scala.version>
-        <confluent.version>2.1.0-alpha1</confluent.version>
+        <confluent.version>3.0.0-SNAPSHOT</confluent.version>
         <scalatest.version>2.2.6</scalatest.version>
         <avro.version>1.7.7</avro.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
