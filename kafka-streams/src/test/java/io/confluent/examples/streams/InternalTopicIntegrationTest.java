@@ -14,20 +14,10 @@
 
 package io.confluent.examples.streams;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
+
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.common.serialization.LongDeserializer;
-import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.serialization.Serializer;
-import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
@@ -40,10 +30,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.Future;
 
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
 
@@ -54,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * Note: This example uses lambda expressions and thus works with Java 8+ only.
  */
-public class InternalTopicTest {
+public class InternalTopicIntegrationTest {
     private static EmbeddedSingleNodeKafkaCluster cluster = null;
     private static final String inputTopic = "inputTopic";
     private static final String outputTopic = "outputTopic";
