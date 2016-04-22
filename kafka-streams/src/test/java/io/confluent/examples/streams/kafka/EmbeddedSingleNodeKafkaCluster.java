@@ -120,4 +120,12 @@ public class EmbeddedSingleNodeKafkaCluster {
     broker.createTopic(topic, partitions, replication, topicConfig);
   }
 
+  /**
+   * Validates that any changelog topics in the cluster are compacted
+   * @return true if topics have a valid config, false otherwise
+   */
+  public boolean validateCompactTopicsConfig() {
+    return broker.validateCompactTopicsConfig();
+  }
+
 }
