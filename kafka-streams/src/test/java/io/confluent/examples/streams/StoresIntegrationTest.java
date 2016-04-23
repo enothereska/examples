@@ -99,11 +99,11 @@ public class StoresIntegrationTest {
 
 
     /**
-     * This tests the problem descibed in https://issues.apache.org/jira/browse/KAFKA-3559
+     * This tests the problem described in https://issues.apache.org/jira/browse/KAFKA-3559
      */
     @Test
     public void testCreateLargeNumberOfStores() throws Exception {
-        int numStores = 500;
+        int numStores = 100;
         Properties props = new Properties();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "stores-integration-test-processor");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers());

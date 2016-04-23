@@ -38,7 +38,8 @@ public class KafkaEmbedded {
   private static final Logger log = LoggerFactory.getLogger(KafkaEmbedded.class);
 
   private static final String DEFAULT_ZK_CONNECT = "127.0.0.1:2181";
-
+  private int DEFAULT_ZK_SESSION_TIMEOUT_MS = 10 * 1000;
+  private int DEFAULT_ZK_CONNECTION_TIMEOUT_MS = 8 * 1000;
   private final Properties effectiveConfig;
   private final File logDir;
   private final KafkaServerStartable kafka;
@@ -149,64 +150,19 @@ public class KafkaEmbedded {
                           Properties topicConfig) {
     log.debug("Creating topic { name: {}, partitions: {}, replication: {}, config: {} }",
         topic, partitions, replication, topicConfig);
-    int sessionTimeoutMs = 10 * 1000;
-    int connectionTimeoutMs = 8 * 1000;
+
     // Note: You must initialize the ZkClient with ZKStringSerializer.  If you don't, then
     // createTopic() will only seem to work (it will return without error).  The topic will exist in
     // only ZooKeeper and will be returned when listing topics, but Kafka itself does not create the
     // topic.
     ZkClient zkClient = new ZkClient(
         zookeeperConnect(),
-        sessionTimeoutMs,
-        connectionTimeoutMs,
+        DEFAULT_ZK_SESSION_TIMEOUT_MS,
+        DEFAULT_ZK_CONNECTION_TIMEOUT_MS,
         ZKStringSerializer$.MODULE$);
     boolean isSecure = false;
     ZkUtils zkUtils = new ZkUtils(zkClient, new ZkConnection(zookeeperConnect()), isSecure);
     AdminUtils.createTopic(zkUtils, topic, partitions, replication, topicConfig, RackAwareMode.Enforced$.MODULE$);
     zkClient.close();
-  }
-
-  /**
-   * Validates that any changelog topics are compacted
-   * @return true if topics have a valid config, false otherwise
-   */
-  public boolean validateCompactTopicsConfig() {
-    int sessionTimeoutMs = 10 * 1000;
-    int connectionTimeoutMs = 8 * 1000;
-
-    // Note: You must initialize the ZkClient with ZKStringSerializer.  If you don't, then
-    // createTopic() will only seem to work (it will return without error).  The topic will exist in
-    // only ZooKeeper and will be returned when listing topics, but Kafka itself does not create the
-    // topic.
-    ZkClient zkClient = new ZkClient(
-        zookeeperConnect(),
-        sessionTimeoutMs,
-        connectionTimeoutMs,
-        ZKStringSerializer$.MODULE$);
-    boolean isSecure = false;
-    ZkUtils zkUtils = new ZkUtils(zkClient, new ZkConnection(zookeeperConnect()), isSecure);
-
-    Map<String, Properties> topicConfigs = AdminUtils.fetchAllTopicConfigs(zkUtils);
-    Iterator it = topicConfigs.iterator();
-    while (it.hasNext()) {
-      Tuple2<String, Properties> topicConfig = (Tuple2<String, Properties>) it.next();
-      String topic = topicConfig._1;
-      Properties prop = topicConfig._2;
-
-      // statechange logs should be compacted
-      if (topic.endsWith(ProcessorStateManager.STATE_CHANGELOG_TOPIC_SUFFIX)) {
-        if (prop.containsKey(LogConfig.CleanupPolicyProp())) {
-          if (!prop.getProperty(LogConfig.CleanupPolicyProp()).equals(LogConfig.Compact())) {
-            log.debug("Changelog topic {} is not compacted", topic);
-            return false;
-          }
-        } else {
-          log.debug("Changelog topic {} is not compacted", topic);
-          return false;
-        }
-      }
-    }
-    zkClient.close();
-    return true;
   }
 }

@@ -15,6 +15,8 @@
 package io.confluent.examples.streams;
 
 
+import org.I0Itec.zkclient.ZkClient;
+import org.I0Itec.zkclient.ZkConnection;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
@@ -24,6 +26,7 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.apache.kafka.streams.processor.internals.ProcessorStateManager;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -34,6 +37,13 @@ import java.util.List;
 import java.util.Properties;
 
 import io.confluent.examples.streams.kafka.EmbeddedSingleNodeKafkaCluster;
+import kafka.admin.AdminUtils;
+import kafka.log.LogConfig;
+import kafka.utils.ZKStringSerializer$;
+import kafka.utils.ZkUtils;
+import scala.Tuple2;
+import scala.collection.Iterator;
+import scala.collection.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -46,6 +56,8 @@ public class InternalTopicIntegrationTest {
     private static EmbeddedSingleNodeKafkaCluster cluster = null;
     private static final String inputTopic = "inputTopic";
     private static final String outputTopic = "outputTopic";
+    private int DEFAULT_ZK_SESSION_TIMEOUT_MS = 10 * 1000;
+    private int DEFAULT_ZK_CONNECTION_TIMEOUT_MS = 8 * 1000;
 
     @BeforeClass
     public static void startKafkaCluster() throws Exception {
@@ -59,6 +71,46 @@ public class InternalTopicIntegrationTest {
         if (cluster != null) {
             cluster.stop();
         }
+    }
+
+
+    /**
+     * Validates that any state changelog topics are compacted
+     * @return true if topics have a valid config, false otherwise
+     */
+    private boolean isUsingCompactionForStateChangelogTopics() {
+        boolean valid = true;
+
+        // Note: You must initialize the ZkClient with ZKStringSerializer.  If you don't, then
+        // createTopic() will only seem to work (it will return without error).  The topic will exist in
+        // only ZooKeeper and will be returned when listing topics, but Kafka itself does not create the
+        // topic.
+        ZkClient zkClient = new ZkClient(
+            cluster.zookeeperConnect(),
+            DEFAULT_ZK_SESSION_TIMEOUT_MS,
+            DEFAULT_ZK_CONNECTION_TIMEOUT_MS,
+            ZKStringSerializer$.MODULE$);
+        boolean isSecure = false;
+        ZkUtils zkUtils = new ZkUtils(zkClient, new ZkConnection(cluster.zookeeperConnect()), isSecure);
+
+        Map<String, Properties> topicConfigs = AdminUtils.fetchAllTopicConfigs(zkUtils);
+        Iterator it = topicConfigs.iterator();
+        while (it.hasNext()) {
+            Tuple2<String, Properties> topicConfig = (Tuple2<String, Properties>) it.next();
+            String topic = topicConfig._1;
+            Properties prop = topicConfig._2;
+
+            // state changelogs should be compacted
+            if (topic.endsWith(ProcessorStateManager.STATE_CHANGELOG_TOPIC_SUFFIX)) {
+                if (!prop.containsKey(LogConfig.CleanupPolicyProp()) ||
+                    !prop.getProperty(LogConfig.CleanupPolicyProp()).equals(LogConfig.Compact())) {
+                    valid = false;
+                    break;
+                }
+            }
+        }
+        zkClient.close();
+        return valid;
     }
 
     @Test
@@ -121,7 +173,7 @@ public class InternalTopicIntegrationTest {
         //
         // Step 3: Verify the state changelog topics are compact
         //
-        assertThat(cluster.validateCompactTopicsConfig()).isEqualTo(true);
+        assertThat(isUsingCompactionForStateChangelogTopics()).isEqualTo(true);
 
     }
 
