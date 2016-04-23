@@ -2,7 +2,6 @@ package io.confluent.examples.streams.kafka;
 
 import org.I0Itec.zkclient.ZkClient;
 import org.I0Itec.zkclient.ZkConnection;
-import org.apache.kafka.streams.processor.internals.ProcessorStateManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,15 +14,11 @@ import java.util.Random;
 
 import kafka.admin.AdminUtils;
 import kafka.admin.RackAwareMode;
-import kafka.log.LogConfig;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServerStartable;
 import kafka.utils.CoreUtils;
 import kafka.utils.ZKStringSerializer$;
 import kafka.utils.ZkUtils;
-import scala.Tuple2;
-import scala.collection.Iterator;
-import scala.collection.Map;
 
 /**
  * Runs an in-memory, "embedded" instance of a Kafka broker, which listens at `127.0.0.1:9092` by
