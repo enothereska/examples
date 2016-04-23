@@ -33,8 +33,8 @@ public class KafkaEmbedded {
   private static final Logger log = LoggerFactory.getLogger(KafkaEmbedded.class);
 
   private static final String DEFAULT_ZK_CONNECT = "127.0.0.1:2181";
-  private int DEFAULT_ZK_SESSION_TIMEOUT_MS = 10 * 1000;
-  private int DEFAULT_ZK_CONNECTION_TIMEOUT_MS = 8 * 1000;
+  private static final int DEFAULT_ZK_SESSION_TIMEOUT_MS = 10 * 1000;
+  private static final int DEFAULT_ZK_CONNECTION_TIMEOUT_MS = 8 * 1000;
   private final Properties effectiveConfig;
   private final File logDir;
   private final KafkaServerStartable kafka;
